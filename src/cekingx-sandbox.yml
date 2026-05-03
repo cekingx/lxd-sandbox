@@ -1,0 +1,137 @@
+image:
+  name: cekingx-sandbox
+  distribution: ubuntu
+  release: jammy
+  description: Ubuntu 22.04 with Node.js, Neovim, and Claude Code
+  architecture: amd64
+
+source:
+  downloader: debootstrap
+  url: http://id.archive.ubuntu.com/ubuntu
+  suite: jammy
+  components:
+    - main
+    - restricted
+    - universe
+
+packages:
+  manager: apt
+  update: true
+  cleanup: true
+  sets:
+    - packages:
+        # Base utilities
+        - curl
+        - wget
+        - git
+        - unzip
+        - xz-utils
+        - build-essential
+        - ca-certificates
+        - gnupg
+        - openssh-server
+        # Neovim runtime dependencies
+        - ripgrep
+        - fd-find
+        - python3
+        - python3-pip
+      action: install
+
+files:
+  - path: /etc/hostname
+    generator: hostname
+
+  - path: /etc/hosts
+    generator: hosts
+
+  - path: /etc/machine-id
+    generator: dump
+
+  - path: /var/lib/dbus/machine-id
+    generator: remove
+
+  - path: /etc/network/interfaces
+    generator: dump
+    content: |-
+      auto lo
+      iface lo inet loopback
+      auto eth0
+      iface eth0 inet dhcp
+
+  # Node.js setup script (NodeSource repo)
+  - path: /usr/local/bin/setup-node.sh
+    generator: dump
+    mode: "0755"
+    content: |-
+      #!/bin/bash
+      set -eux
+      curl -fsSL https://deb.nodesource.com/setup_22.x | bash -
+      apt-get install -y nodejs
+
+  # Neovim install script (latest appimage from GitHub)
+  - path: /usr/local/bin/setup-nvim.sh
+    generator: dump
+    mode: "0755"
+    content: |-
+      #!/bin/bash
+      set -eux
+      curl -LO https://github.com/neovim/neovim/releases/latest/download/nvim-linux-x86_64.tar.gz
+      tar -C /opt -xzf nvim-linux-x86_64.tar.gz
+      ln -sf /opt/nvim-linux-x86_64/bin/nvim /usr/local/bin/nvim
+      rm nvim-linux-x86_64.tar.gz
+
+  # Claude Code install script (npm global)
+  - path: /usr/local/bin/setup-claude.sh
+    generator: dump
+    mode: "0755"
+    content: |-
+      #!/bin/bash
+      set -eux
+      npm install -g @anthropic-ai/claude-code
+
+  # Global nvim config (basic, usable out of the box)
+  - path: /etc/skel/.config/nvim/init.lua
+    generator: dump
+    content: |-
+      -- Basic Neovim config
+      vim.opt.number = true
+      vim.opt.relativenumber = true
+      vim.opt.tabstop = 2
+      vim.opt.shiftwidth = 2
+      vim.opt.expandtab = true
+      vim.opt.smartindent = true
+      vim.opt.wrap = false
+      vim.opt.termguicolors = true
+      vim.opt.scrolloff = 8
+      vim.opt.updatetime = 50
+      vim.g.mapleader = " "
+
+actions:
+  - trigger: post-files
+    action: |-
+      #!/bin/bash
+      set -eux
+
+      # --- Node.js 22.x via NodeSource ---
+      /usr/local/bin/setup-node.sh
+
+      # --- Neovim latest ---
+      /usr/local/bin/setup-nvim.sh
+
+      # --- Claude Code ---
+      /usr/local/bin/setup-claude.sh
+
+      # --- Verify installs ---
+      node --version
+      npm --version
+      nvim --version
+      claude --version
+
+      # Enable SSH
+      systemctl enable ssh
+
+      # Cleanup
+      apt-get autoremove -y
+      apt-get clean
+      rm -rf /tmp/* /var/tmp/*
+      rm -f /usr/local/bin/setup-*.sh
