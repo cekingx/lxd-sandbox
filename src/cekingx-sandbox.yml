@@ -155,7 +155,9 @@ packages:
         - fuse
         - language-pack-en
         - openssh-client
+        - openssh-server
         - vim
+        - xz-utils
       action: install
 
     - packages:
@@ -237,14 +239,16 @@ actions:
     variants:
       - default
 
-  - trigger: post-update
+  - trigger: post-packages
     action: |-
       #!/bin/sh
       set -eux
 
-      # Install Node.js 24 via NodeSource
-      curl -fsSL https://deb.nodesource.com/setup_24.x | bash -
-      apt-get install -y nodejs
+      # Install Node.js 24 standalone binary
+      curl -fsSL https://nodejs.org/dist/v24.15.0/node-v24.15.0-linux-x64.tar.xz | tar -xJ -C /usr/local --strip-components=1
+
+      # Install Claude Code
+      npm install -g @anthropic-ai/claude-code
 
   - trigger: post-packages
     action: |-
