@@ -13,3 +13,13 @@ sudo lxd-imagebuilder build-lxd src/cekingx-sandbox.yml ./out/cekingx-sandbox
 ```bash
 sudo lxc image import ./out/cekingx-sandbox/lxd.tar.xz ./out/cekingx-sandbox/rootfs.squashfs --alias <some-name>
 ```
+
+## SSH Access
+
+Connect as the `ubuntu` user using the `~/.ssh/lxd` key:
+
+```bash
+ssh ubuntu@<instance-ip> -i ~/.ssh/lxd
+```
+
+> **Note:** The SSH public key (`~/.ssh/lxd.pub`) is hardcoded in `src/cekingx-sandbox.yml` under `/home/ubuntu/.ssh/authorized_keys`. To use a different key, update that file before building the image.
