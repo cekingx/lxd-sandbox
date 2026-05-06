@@ -143,13 +143,6 @@ files:
     variants:
       - default
 
-  - path: /home/ubuntu/.ssh/authorized_keys
-    generator: dump
-    mode: 0600
-    content: |-
-      ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIF9NRbEitYoDRHoWtGLScAPCR7L1xbH7WtIhfJb8YMqW cekingx-msi@cekingx-modern-14-b5m
-    variants:
-      - default
 
 packages:
   manager: apt
@@ -158,9 +151,11 @@ packages:
 
   sets:
     - packages:
+        - build-essential
         - curl
         - ca-certificates
         - fuse
+        - git
         - language-pack-en
         - openssh-client
         - openssh-server
@@ -244,6 +239,7 @@ actions:
       # Create the ubuntu user account
       getent group sudo >/dev/null 2>&1 || groupadd --system sudo
       useradd --create-home -s /bin/bash -G sudo -U ubuntu
+      echo "ubuntu:root13" | chpasswd
     variants:
       - default
 
@@ -257,6 +253,16 @@ actions:
 
       # Install Claude Code
       npm install -g @anthropic-ai/claude-code
+
+  - trigger: post-packages
+    action: |-
+      #!/bin/sh
+      set -eux
+
+      # Install Homebrew as ubuntu user
+      mkdir -p /home/linuxbrew/.linuxbrew
+      chown -R ubuntu:ubuntu /home/linuxbrew
+      NONINTERACTIVE=1 su - ubuntu -c '/bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"'
 
   - trigger: post-packages
     action: |-
@@ -303,10 +309,8 @@ actions:
       #!/bin/sh
       set -eux
 
-      # Fix .ssh ownership so ubuntu user can authenticate with key
-      chmod 0700 /home/ubuntu/.ssh
-      chmod 0600 /home/ubuntu/.ssh/authorized_keys
-      chown -R ubuntu:ubuntu /home/ubuntu/.ssh
+      # Enable SSH password authentication
+      sed -i 's/^#\?PasswordAuthentication.*/PasswordAuthentication yes/' /etc/ssh/sshd_config
     variants:
       - default
 
