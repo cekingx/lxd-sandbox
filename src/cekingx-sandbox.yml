@@ -259,6 +259,18 @@ actions:
       #!/bin/sh
       set -eux
 
+      # Install Neovim
+      curl -LO https://github.com/neovim/neovim/releases/latest/download/nvim-linux-x86_64.tar.gz
+      rm -rf /opt/nvim-linux-x86_64
+      tar -C /opt -xzf nvim-linux-x86_64.tar.gz
+      rm nvim-linux-x86_64.tar.gz
+      echo 'export PATH="$PATH:/opt/nvim-linux-x86_64/bin"' >> /home/ubuntu/.bashrc
+
+  - trigger: post-packages
+    action: |-
+      #!/bin/sh
+      set -eux
+
       # Install Homebrew as ubuntu user
       mkdir -p /home/linuxbrew/.linuxbrew
       chown -R ubuntu:ubuntu /home/linuxbrew
