@@ -8,7 +8,6 @@ image:
 
 source:
   downloader: debootstrap
-  same_as: gutsy
   url: http://id.archive.ubuntu.com/ubuntu
   keyserver: keyserver.ubuntu.com
   keys:
@@ -275,6 +274,13 @@ actions:
       mkdir -p /home/linuxbrew/.linuxbrew
       chown -R ubuntu:ubuntu /home/linuxbrew
       NONINTERACTIVE=1 su - ubuntu -c '/bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"'
+
+      # Add Homebrew to PATH
+      echo >> /home/ubuntu/.bashrc
+      echo 'eval "$(/home/linuxbrew/.linuxbrew/bin/brew shellenv bash)"' >> /home/ubuntu/.bashrc
+
+      # Install GCC via Homebrew
+      su - ubuntu -c 'eval "$(/home/linuxbrew/.linuxbrew/bin/brew shellenv bash)" && brew install gcc'
 
   - trigger: post-packages
     action: |-
