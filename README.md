@@ -21,3 +21,9 @@ Connect as the `ubuntu` user with password `root13`:
 ```bash
 ssh ubuntu@<instance-ip>
 ```
+
+If you have local SSH keys, the client may offer them before password auth and get disconnected with `Too many authentication failures`. Force password-only auth:
+
+```bash
+ssh -o PreferredAuthentications=password -o PubkeyAuthentication=no ubuntu@<instance-ip>
+```
